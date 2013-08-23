@@ -25,6 +25,9 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'visits', ['Provider'])
 
+        # Adding unique constraint on 'Provider', fields ['first_name', 'last_name']
+        db.create_unique(u'visits_provider', ['first_name', 'last_name'])
+
         # Adding M2M table for field visits on 'Provider'
         m2m_table_name = db.shorten_name(u'visits_provider_visits')
         db.create_table(m2m_table_name, (
@@ -36,6 +39,9 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
+        # Removing unique constraint on 'Provider', fields ['first_name', 'last_name']
+        db.delete_unique(u'visits_provider', ['first_name', 'last_name'])
+
         # Deleting model 'Visit'
         db.delete_table(u'visits_visit')
 
@@ -48,14 +54,14 @@ class Migration(SchemaMigration):
 
     models = {
         u'visits.provider': {
-            'Meta': {'object_name': 'Provider'},
+            'Meta': {'unique_together': "(('first_name', 'last_name'),)", 'object_name': 'Provider'},
             'first_name': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_name': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'visits': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['visits.Visit']", 'symmetrical': 'False'})
         },
         u'visits.visit': {
-            'Meta': {'object_name': 'Visit'},
+            'Meta': {'ordering': "('-date',)", 'object_name': 'Visit'},
             'date': ('django.db.models.fields.DateTimeField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'location': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
